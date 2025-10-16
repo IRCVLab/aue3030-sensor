@@ -56,25 +56,6 @@ def set_enum(nm: PySpin.INodeMap, node_name: str, entry_name: str) -> bool:
     return True
 
 
-# def get_str(nm: PySpin.INodeMap, node_name: str) -> str:
-#     """문자열 노드 읽기"""
-#     node = PySpin.CStringPtr(nm.GetNode(node_name))
-#     if PySpin.IsAvailable(node) and PySpin.IsReadable(node):
-#         return node.GetValue()
-#     return "N/A"
-
-
-# def get_cam_by_serial(cam_list: PySpin.CameraList, serial: str) -> Optional[PySpin.CameraPtr]:
-#     """시리얼 번호로 카메라 찾기"""
-#     for i in range(cam_list.GetSize()):
-#         cam = cam_list.GetByIndex(i)
-#         tl = cam.GetTLDeviceNodeMap()
-#         sn = get_str(tl, "DeviceSerialNumber")
-#         if sn == serial:
-#             return cam
-#     return None
-
-
 def configure_continuous_acquisition(cam: PySpin.CameraPtr, cam_serial: str) -> bool:
     """연속 촬영 모드로 카메라 설정"""
     try:
@@ -365,4 +346,5 @@ def main() -> None:
 
 
 if __name__ == "__main__":
+
     main()
