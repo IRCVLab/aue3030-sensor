@@ -6,3 +6,4 @@ numpy
 ipykernel
 pprint
 Pillow
+opencv-python
