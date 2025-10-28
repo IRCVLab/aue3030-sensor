@@ -12,7 +12,6 @@ intrinsics_calib.py
 
 기본은 체스보드(내부 코너 cols x rows), 한 칸 실측 길이 square(단위 일관성 유지).
 """
-import argparse
 import glob
 import os
 from typing import List, Tuple
@@ -20,6 +19,18 @@ from typing import List, Tuple
 import cv2
 import numpy as np
 import json
+
+# 이미지 경로
+cam1_glob = "./calibration/cam1/*.jpg"
+cam2_glob = "./calibration/cam2/*.jpg"
+
+# 코너 교차점 개수
+cols = 5
+rows = 6
+
+# 체커보드 한 칸의 실제 길이(mm)
+square = 80.0
+outdir = "./calibration/int"
 
 def build_object_points(cols: int, rows: int, square: float) -> np.ndarray:
     objp = np.zeros((cols*rows, 3), np.float32)
@@ -29,6 +40,7 @@ def build_object_points(cols: int, rows: int, square: float) -> np.ndarray:
 
 def find_corners(img: np.ndarray, cols: int, rows: int):
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) if img.ndim == 3 else img
+    # Q. 체커보드의 코너를 검출하는 이유가 무엇일까?
     ret, corners = cv2.findChessboardCorners(gray, (cols, rows))
     if not ret:
         return False, None
@@ -37,6 +49,7 @@ def find_corners(img: np.ndarray, cols: int, rows: int):
     return True, corners
 
 def save_intrinsics(path_yaml: str, K: np.ndarray, dist: np.ndarray, rms: float):
+    # 혹시 몰라 YAML, JSON 둘 다 저장하기
     # YAML
     fs = cv2.FileStorage(path_yaml, cv2.FILE_STORAGE_WRITE)
     fs.write("K", K)
@@ -65,8 +78,6 @@ def calibrate_single_cam(image_glob: str, cols: int, rows: int, square: float):
         if img is None:
             print(f"[WARN] 로드 실패: {p}")
             continue
-        if imsize is None:
-            imsize = (img.shape[1], img.shape[0])
 
         ret, corners = find_corners(img, cols, rows)
         if ret:
@@ -87,34 +98,25 @@ def calibrate_single_cam(image_glob: str, cols: int, rows: int, square: float):
     return rms, K, dist, imsize, (objpoints, imgpoints)
 
 def main():
-    ap = argparse.ArgumentParser(description="Dual-camera intrinsics calibration (pinhole)")
-    ap.add_argument("--cam1-glob", default="./calibration/cam1/*.jpg")
-    ap.add_argument("--cam2-glob", default="./calibration/cam2/*.jpg")
-    ap.add_argument("--cols", type=int, default=5, help="체스보드 내부 코너(가로)")
-    ap.add_argument("--rows", type=int, default=6, help="체스보드 내부 코너(세로)")
-    ap.add_argument("--square", type=float, default=80.0, help="한 칸 물리 길이(mm 등)")
-    ap.add_argument("--outdir", default="./calibration/int", help="내부 파라미터 저장 폴더")
-    return_args = ap.parse_args()
-
-    os.makedirs(return_args.outdir, exist_ok=True)
+    os.makedirs(outdir, exist_ok=True)
 
     print("[CAM1] 내부 파라미터 추정 중...")
-    rms1, K1, D1, size1, data1 = calibrate_single_cam(return_args.cam1_glob, return_args.cols, return_args.rows, return_args.square)
-    save_intrinsics(os.path.join(return_args.outdir, "cam1.yaml"), K1, D1, rms1)
+    rms1, K1, D1, size1, data1 = calibrate_single_cam(cam1_glob, cols, rows, square)
+    save_intrinsics(os.path.join(outdir, "cam1.yaml"), K1, D1, rms1)
 
     print("\n[CAM2] 내부 파라미터 추정 중...")
-    rms2, K2, D2, size2, data2 = calibrate_single_cam(return_args.cam2_glob, return_args.cols, return_args.rows, return_args.square)
-    save_intrinsics(os.path.join(return_args.outdir, "cam2.yaml"), K2, D2, rms2)
+    rms2, K2, D2, size2, data2 = calibrate_single_cam(cam2_glob, cols, rows, square)
+    save_intrinsics(os.path.join(outdir, "cam2.yaml"), K2, D2, rms2)
 
     # 보조로 데이터 페어 수/이미지 크기 기록(스테레오 단계에서 유용)
     meta = {
         "cam1": {"image_size": size1, "valid_images": len(data1[0])},
         "cam2": {"image_size": size2, "valid_images": len(data2[0])},
-        "pattern": {"cols": return_args.cols, "rows": return_args.rows, "square": return_args.square}
+        "pattern": {"cols": cols, "rows": rows, "square": square}
     }
-    with open(os.path.join(return_args.outdir, "meta.json"), "w", encoding="utf-8") as f:
+    with open(os.path.join(outdir, "meta.json"), "w", encoding="utf-8") as f:
         json.dump(meta, f, indent=2, ensure_ascii=False)
-    print(f"[SAVE] {os.path.join(return_args.outdir, 'meta.json')}")
+    print(f"[SAVE] {os.path.join(outdir, 'meta.json')}")
 
 if __name__ == "__main__":
     main()
