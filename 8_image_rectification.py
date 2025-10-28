@@ -17,10 +17,15 @@ from typing import List, Tuple
 import cv2
 import numpy as np
 
+# 이미지 경로 
 cam1_path ="./calibration/cam1/*.jpg"
 cam2_path ="./calibration/cam2/*.jpg"
+
+#파라미터 경로
 intrinsic_param ="./calibration/int"
 extrinsic_param ="./calibration/ext"
+
+#체커보드 정보
 cols = 5
 rows = 6
 square = 80.0
@@ -65,7 +70,7 @@ def main():
     if not p1 or not p2:
         raise FileNotFoundError("입력 이미지가 비었습니다.")
     if len(p1) != len(p2):
-        print(f"[WARN] 이미지 개수가 다릅니다. min 쌍으로만 진행합니다. ({len(p1)} vs {len(p2)})")
+        print(f"[WARN] 이미지 개수가 다릅니다.")
     n = min(len(p1), len(p2))
 
     objp = build_object_points(cols, rows, square)
@@ -74,7 +79,6 @@ def main():
     imgpoints2: List[np.ndarray] = []
     imsize = None
 
-    # [NEW] 비교 시각화를 위해 첫 번째 유효한 이미지 쌍을 저장할 변수
     first_valid_im1 = None
     first_valid_im2 = None
 
@@ -87,7 +91,6 @@ def main():
         if imsize is None:
             imsize = (im1.shape[1], im1.shape[0]) # (width, height)
         
-        # [NEW] 캘리브레이션과 시각화에 사용할 이미지 해상도가 동일한지 확인
         if (im1.shape[1], im1.shape[0]) != imsize:
             print(f"[WARN] 해상도가 다른 이미지 발견, 건너뜁니다: {p1[i]}")
             continue
@@ -100,7 +103,6 @@ def main():
             imgpoints1.append(c1)
             imgpoints2.append(c2)
             
-            # [NEW] 첫 번째 유효한 이미지 쌍 저장
             if first_valid_im1 is None:
                 first_valid_im1 = im1.copy()
                 first_valid_im2 = im2.copy()
@@ -124,24 +126,17 @@ def main():
     print("[RESULT] R=\n", R)
     print("[RESULT] T=\n", T.T)
 
-    # Rectification (유용하므로 함께 저장)
+    # Rectification
     R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(
         K1, D1, K2, D2, imsize, R, T, flags=cv2.CALIB_ZERO_DISPARITY, alpha=0
     )
 
-    # [NEW] ##################################################################
-    #
-    #       캘리브레이션 결과 시각화 (원본 vs 보정본)
-    #
-    # [NEW] ##################################################################
     if first_valid_im1 is not None:
         print("\n[INFO] 캘리브레이션 결과 시각화...")
         h, w = imsize[1], imsize[0]
 
-        # 1. 보정 전 원본 이미지 (나란히 붙이기)
         original_pair = np.hstack((first_valid_im1, first_valid_im2))
 
-        # 2. 보정 후 정렬된 이미지 (렉티피케이션)
         map1_x, map1_y = cv2.initUndistortRectifyMap(K1, D1, R1, P1, imsize, cv2.CV_32FC1)
         map2_x, map2_y = cv2.initUndistortRectifyMap(K2, D2, R2, P2, imsize, cv2.CV_32FC1)
         
@@ -150,14 +145,13 @@ def main():
 
         rectified_pair = np.hstack((img1_rect, img2_rect))
 
-        # 3. 보정된 이미지에 정렬 테스트용 수평선 그리기
+        # 보정된 이미지에 정렬 테스트용 수평선 그리기
         num_lines = 25
         for i in range(1, num_lines):
             y = int(h * i / num_lines)
             cv2.line(rectified_pair, (0, y), (w * 2, y), (0, 255, 0), 1)
 
-        # 4. 원본과 보정본을 위아래로 합치기
-        #    텍스트를 추가하기 위해 경계선 영역(검은색)을 만듭니다.
+        # 원본과 보정본을 위아래로 합치기
         font = cv2.FONT_HERSHEY_SIMPLEX
         margin = np.zeros((50, w * 2, 3), dtype=np.uint8)
         
@@ -170,7 +164,7 @@ def main():
         
         comparison_image = np.vstack((top_image, bottom_image))
         
-        # 5. 결과 창 띄우기
+        # 결과 창 띄우기
         max_display_width = 1920
         disp_h, disp_w = comparison_image.shape[:2]
         
@@ -186,14 +180,15 @@ def main():
         print("       - (위) 원본 이미지 / (아래) 보정 후 이미지")
         print("       - 'q' 키를 누르면 결과가 저장되고 스크립트가 종료됩니다.")
         
+        # 비교 이미지 저장
+        comparison_save_path = os.path.join(extrinsic_param, "stereo_calibration_result.jpg")
+        cv2.imwrite(comparison_save_path, comparison_image)
+        print(f"[SAVE] {comparison_save_path}")
+        
         while True:
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-
-    # [NEW] ##################################################################
-    #       시각화 종료
-    # [NEW] ##################################################################
 
     # 저장 (YAML + JSON)
     yaml_path = os.path.join(extrinsic_param, "stereo.yaml")
