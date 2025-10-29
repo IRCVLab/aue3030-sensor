@@ -76,12 +76,12 @@ def get_unique_filename(base_path, serial, initial_count):
     """
     count = initial_count
     # 초기 파일명 생성
-    filename = os.path.join(base_path, f"seq_sync_{serial}_{count:03d}.jpg")
+    filename = os.path.join(base_path, f"image_{count:03d}.jpg")
 
     # 파일이 존재하면 count를 1씩 증가시키면서 고유한 파일명을 찾습니다.
     while os.path.exists(filename):
         count += 1
-        filename = os.path.join(base_path, f"seq_sync_{serial}_{count:03d}.jpg")
+        filename = os.path.join(base_path, f"image_{count:03d}.jpg")
 
     return filename
 

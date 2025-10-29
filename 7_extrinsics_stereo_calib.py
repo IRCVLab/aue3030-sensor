@@ -16,15 +16,10 @@ from typing import List, Tuple
 import cv2
 import numpy as np
 
-# 이미지 경로
 cam1_path ="./calibration/cam1/*.jpg"
 cam2_path ="./calibration/cam2/*.jpg"
-
-# 파라미터 경로
 intrinsic_param ="./calibration/int"
 extrinsic_param ="./calibration/ext"
-
-# 체커보드 정보
 cols = 5
 rows = 6
 square = 80.0
@@ -69,7 +64,7 @@ def main():
     if not p1 or not p2:
         raise FileNotFoundError("입력 이미지가 비었습니다.")
     if len(p1) != len(p2):
-        print(f"[WARN] 이미지 개수가 다릅니다")
+        print(f"[WARN] 이미지 개수가 다릅니다. min 쌍으로만 진행합니다. ({len(p1)} vs {len(p2)})")
     n = min(len(p1), len(p2))
 
     objp = build_object_points(cols, rows, square)
@@ -112,7 +107,7 @@ def main():
     print("[RESULT] R=\n", R)
     print("[RESULT] T=\n", T.T)
 
-    # Rectification
+    # Rectification (유용하므로 함께 저장)
     R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(
         K1, D1, K2, D2, imsize, R, T, flags=cv2.CALIB_ZERO_DISPARITY, alpha=0
     )
