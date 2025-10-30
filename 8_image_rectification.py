@@ -177,11 +177,11 @@ def main():
         if disp_w > max_display_width:
             scale = max_display_width / float(disp_w)
             disp_h = int(disp_h * scale)
-            disp_w = max_display_width
+            disp_w = int(disp_w * scale)
         
         cv2.imshow("Stereo Calibration Result (Press 'q' to save & quit)", 
                    cv2.resize(comparison_image, (disp_w, disp_h)))
-        
+        cv2.imwrite("./calibration/8_output.png", comparison_image)
         print("[INFO] 시각화 창이 열렸습니다.")
         print("       - (위) 원본 이미지 / (아래) 보정 후 이미지")
         print("       - 'q' 키를 누르면 결과가 저장되고 스크립트가 종료됩니다.")
@@ -223,4 +223,5 @@ def main():
     print(f"[SAVE] {os.path.join(extrinsic_param, 'stereo.json')}")
 
 if __name__ == "__main__":
+
     main()
