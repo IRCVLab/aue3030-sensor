@@ -80,24 +80,24 @@ def set_bool(nm: PySpin.INodeMap, node_name: str, value: bool) -> bool:
     return True
 
 
-# def get_str(nm: PySpin.INodeMap, node_name: str) -> str:
-#     """
-#     Read a CString node as string if available/readable; prints debug.
+def get_str(nm: PySpin.INodeMap, node_name: str) -> str:
+    """
+    Read a CString node as string if available/readable; prints debug.
 
-#     Args:
-#         nm (PySpin.INodeMap): Node map (TL or device).
-#         node_name (str): Node name.
+    Args:
+        nm (PySpin.INodeMap): Node map (TL or device).
+        node_name (str): Node name.
 
-#     Returns:
-#         str: Value or 'N/A'.
-#     """
-#     node = PySpin.CStringPtr(nm.GetNode(node_name))
-#     if PySpin.IsAvailable(node) and PySpin.IsReadable(node):
-#         val = node.GetValue()
-#         dbg(f"ℹ️ get_str('{node_name}') = '{val}'")
-#         return val
-#     dbg(f"❌ get_str('{node_name}'): not available/readable")
-#     return "N/A"
+    Returns:
+        str: Value or 'N/A'.
+    """
+    node = PySpin.CStringPtr(nm.GetNode(node_name))
+    if PySpin.IsAvailable(node) and PySpin.IsReadable(node):
+        val = node.GetValue()
+        dbg(f"ℹ️ get_str('{node_name}') = '{val}'")
+        return val
+    dbg(f"❌ get_str('{node_name}'): not available/readable")
+    return "N/A"
 
 
 def exec_cmd(nm: PySpin.INodeMap, node_name: str) -> bool:
@@ -433,3 +433,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
