@@ -171,16 +171,13 @@ def main():
 
                 d, f, B, Z = point_depth_from_disparity(uL, vL, uR, vR, P1, P2)
                 
-                # 터미널에만 출력 (요청대로 putText는 제거)
                 print(f"[POINT] (uL,vL)=({uL},{vL}) (uR,vR)=({uR},{vR}) disparity on images={d:.3f}px -> depth={Z:.3f}mm")
                 
                 cv2.putText(pair, f"disparity={d:.2f}px, depth={Z:.2f}mm", (30, 40),
                             cv2.FONT_HERSHEY_SIMPLEX, 1.0, (0,255,0), 2)
                 
-                # [수정] 계산이 끝났으므로 다음 클릭을 위해 리스트를 비웁니다.
                 clicks = [] 
             
-            # [수정] 모든 클릭 이벤트 후에 이미지를 갱신합니다.
             cv2.imshow(win, pair)
 
     cv2.setMouseCallback(win, onmouse)

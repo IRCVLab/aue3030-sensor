@@ -129,11 +129,7 @@ def main():
         K1, D1, K2, D2, imsize, R, T, flags=cv2.CALIB_ZERO_DISPARITY, alpha=0
     )
 
-    # [NEW] ##################################################################
-    #
-    #       캘리브레이션 결과 시각화 (원본 vs 보정본)
-    #
-    # [NEW] ##################################################################
+
     if first_valid_im1 is not None:
         print("\n[INFO] 캘리브레이션 결과 시각화...")
         h, w = imsize[1], imsize[0]
@@ -170,30 +166,9 @@ def main():
         
         comparison_image = np.vstack((top_image, bottom_image))
         
-        # 5. 결과 창 띄우기
-        max_display_width = 1920
-        disp_h, disp_w = comparison_image.shape[:2]
-        
-        if disp_w > max_display_width:
-            scale = max_display_width / float(disp_w)
-            disp_h = int(disp_h * scale)
-            disp_w = int(disp_w * scale)
-        
-        cv2.imshow("Stereo Calibration Result (Press 'q' to save & quit)", 
-                   cv2.resize(comparison_image, (disp_w, disp_h)))
-        cv2.imwrite("./calibration/8_output.png", comparison_image)
-        print("[INFO] 시각화 창이 열렸습니다.")
-        print("       - (위) 원본 이미지 / (아래) 보정 후 이미지")
-        print("       - 'q' 키를 누르면 결과가 저장되고 스크립트가 종료됩니다.")
-        
-        while True:
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-        cv2.destroyAllWindows()
-
-    # [NEW] ##################################################################
-    #       시각화 종료
-    # [NEW] ##################################################################
+        save_img_path = "./calibration/8_result/comparison.png"
+        cv2.imwrite(save_img_path, comparison_image)
+        print(f"[SAVE] 비교 이미지 저장 완료: {save_img_path}")
 
     # 저장 (YAML + JSON)
     yaml_path = os.path.join(extrinsic_param, "stereo.yaml")
